@@ -79,7 +79,28 @@ struct PurchasedSnack {
 }
 
 // do-catch 구문의 일반적인 형태
+/*do {
+ try <#expression#>
+ <#statements#>
+} catch <#pattern 1#> {
+ <#statements#>
+} catch <#pattern 2#> where <#condition#> {
+ <#statements#>
+} catch <#pattern 3#>, <#pattern 4#> where <#condition#> {
+ <#statements#>
+} catch {
+ <#statements#>
+}
+ */
+
 // 처리할 수 있는 에러가 무엇인지 나타내기 위해 catch 뒤에 패턴을 작성
+// buyFavoriteSnack(person:vendingMachine:) 함수는 에러를 발생할 수 있으므로 try 표현식으로 호출
+// 에러가 발생하면 실행이 즉시 catch 절로 전송되어 전파가 계속 될 것인지 여부를 결정
+// 패턴이 일치하지 않으면 에러는 마지막 catch 절에 의해 포착되고 지역 error 상수에 바인딩
+// 에러가 발생하지 않으면 do 구문에 나머지 구문이 실행
+
+// catch절은 do절에서 발생할 수 있는 모든 에러를 처리할 필요는 없음
+//
 
 var vendingMachine = VendingMachine()
 
@@ -98,7 +119,66 @@ do {
     print("Unexpected error: \(error).")
 }
 
+// nourish(with:) 함수에서 vend(itemNamed:) 가 VendingMachineError 열거형에 케이스 중 하나의 에러를 발생하면 nourish(with:) 는 메세지를 출력하여 에러를 처리
+func nourish(with item: String) throws {
+    do {
+        try vendingMachine.vend(itemNamed: item)
+    } catch is VendingMachineError {
+        print("Couldn't buy that from the vending machine.")
+    }
+}
 
+do {
+    try nourish(with: "Beet-Flavored Chips")
+} catch {
+    print("Unexpected non-vending-machine-related error: \(error)")
+}
+// Prints "Couldn't buy that from the vending machine."
+
+// 연관된 에러를 포착하기 위한 다른 방법은 콤마로 구분하여 catch 다음에 리스트 형식으로 작성하는 것
+// 리스트화 된 3가지 에러 중 어떤 에러가 발생하면 이 catch 절은 메세지를 출력하여 처리
+func eat(item: String) throws {
+    do {
+        try vendingMachine.vend(itemNamed: item)
+    } catch VendingMachineError.invalidSelection, VendingMachineError.insufficientFunds, VendingMachineError.outOfStock {
+        print("Invalid selection, out of stock, or not enough money.")
+    }
+}
+// 에러를 옵셔널값으로 변화하여 처리하기위해 try? 사용
+func someThrowingFunction() throws -> Int {
+    return 2
+}
+
+let x = try? someThrowingFunction()
+
+let y: Int?
+do {
+    y = try someThrowingFunction()
+} catch {
+    y = nil
+}
+// 여러 접근방식을 사용하여 데이터를 가져오거나 모든 접근방식ㅇ ㅣ실패하면 nil 반환
+func fetchData() -> Data? {
+    if let data = try? fetchDataFromDisk() { return data }
+    if let data = try? fetchDataFromServer() { return data }
+    return nil
+}
+
+// 주어진 경로의 이미지를 로드하거나 이미지를 로드할 수 없을 때는 에러를 발생하는 loadImage(atPath:) 함수를 사용
+// 이미지는 이미지는 애플리케이션과 함께 제공되고 런타임에 에러가 발생하지 않으므로 에러 전파를 비활성화 하는 것이 적절
+let photo = try! loadImage(atPath: "./Resources/John Appleseed.jpg")
+
+// defer 구문
+// processFile() 함수가 종료될 때까지 실행되지 않으며, 이를 통해 파일 핸들을 안전하게 닫을 수 있음
+func processFile() throws {
+    let file = openFile()
+    defer {
+        closeFile(file)
+    }
+    
+    // 파일을 처리하는 코드
+    // 에러가 발생할 수 있는 작업
+}
 
 // 모르는 것 복습
 // Switch case
